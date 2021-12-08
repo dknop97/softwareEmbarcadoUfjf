@@ -160,6 +160,9 @@
     <ClCompile Include="AV5_Q2.c">
       <Filter>Demo App Source</Filter>
     </ClCompile>
+    <ClCompile Include="AV7.c">
+      <Filter>Demo App Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FreeRTOSConfig.h">

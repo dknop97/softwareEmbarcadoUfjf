@@ -84,6 +84,7 @@
     <ClCompile Include="..\..\Source\stream_buffer.c" />
     <ClCompile Include="..\..\Source\timers.c" />
     <ClCompile Include="AV5_Q2.c" />
+    <ClCompile Include="AV7.c" />
     <ClCompile Include="ex1.c" />
     <ClCompile Include="ex10.c" />
     <ClCompile Include="ex11.c" />

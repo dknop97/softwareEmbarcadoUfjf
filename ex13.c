@@ -67,7 +67,7 @@ static void PrintString_ex13(const char* pcString)
 	unsigned long ul;
 
 	xSemaphoreTake(xMutex, portMAX_DELAY);
-	for (ui = 0; ui < 100; ui++)
+	for (ui = 0; ui < 10; ui++)
 	{
 		if(strcmp(pcString,"1"))
 			printf_colored(pcString, COLOR_GREEN);
@@ -80,6 +80,6 @@ static void PrintString_ex13(const char* pcString)
 		}
 	}
 
-	printf("\r\n\rGIVE IT\n\r\n");
+	printf("\r\n\rGIVE \n\r\n");
 	xSemaphoreGive(xMutex);
 }

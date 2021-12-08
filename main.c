@@ -114,13 +114,14 @@ choice.  See http://www.freertos.org/a00111.html for an explanation. */
  * Exemplo 26 :
  * Exemplo 27 : 
  * Exemplo 28 : 
- * Exemplo 29 : QUESTÃO 01 DA ATIVIDADE AVALIATIVA DA SEMANA 5
- * Exemplo 30 : QUESTÃO 02 DA ATIVIDADE AVALIATIVA DA SEMANA 5
+ * Exemplo 29 : QUESTÃO 01 DA ATIVIDADE AVALIATIVA DA SEMANA 5 SOBRE TASKS
+ * Exemplo 30 : QUESTÃO 02 DA ATIVIDADE AVALIATIVA DA SEMANA 5 SOBRE TASKS
+ * Exemplo 31 : ATIVIDADE AVALIATIVA DA SEMANA 7 SOBRE SEMÁFOROS
 */
 
 /* Escolha qual exemplo deseja executar: */
 
-#define example 13
+#define example 31
 
 #if (example == 1)
 extern void main_ex1(void);
@@ -213,7 +214,9 @@ extern void main_av5_q1(void);
 #if (example == 30)
 extern void main_av5_q2(void);
 #endif
-
+#if (example == 31)
+extern void main_av7(void);
+#endif
 
 /*
  * Only the comprehensive demo uses application hook (callback) functions.  See
@@ -370,6 +373,9 @@ int main( void )
 	#if (example == 30)
 		main_av5_q2();
 	#endif
+	#if (example == 31)
+		main_av7();
+	#endif
 	// Fim dos projetos das avaliações
 	#if (example == 99)
 		main_correcao();
@@ -427,7 +433,7 @@ void vApplicationIdleHook( void )
 		}
 	*/
 
-	printf("IDLE!!!\r\n");
+	//printf("IDLE!!!\r\n");
 	for (ui = 0; ui < 3; ui++)
 	{
 		for (ul = 0; ul < 10000000; ul++)
