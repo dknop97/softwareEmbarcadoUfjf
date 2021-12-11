@@ -104,7 +104,13 @@ void vTaskReadSensor_av7(void* pvParameters)
 			vTaskDelete(NULL); /* O que acontece aqui?*/
 		}
 		/*Conversão da amostra lida de string para double*/
-		temperatureSampleValue = atof(temperatureSampleStr);
+		/*As leituras variam de 0 - 1024, ou, em °C, 0 - 100°C
+			Logo, fazemos uma regra de três para conversão
+				1024				   = 100°C
+				temperatureSampleValue = x°C
+				x = (100*temperatureSampleValue)/1024
+		*/
+		temperatureSampleValue = (atof(temperatureSampleStr)*100)/1024;
 			
 		/*Impôe um intervalo entre as leituras das amostras de temperatura do arquivo*/
 		vTaskDelay(TEMP_SAMPLE_READING_INTERVAL / portTICK_RATE_MS);
