@@ -27,9 +27,6 @@ FILE* fpVC;
 int N = 16; /*Para o cálculo do valor RMS*/
 char endFileFlag = 0;
 float vA, vB, vC, vA_RMS, vB_RMS, vC_RMS;
-float buffer_vA[16];
-float buffer_vB[16];
-float buffer_vC[16];
 
 void vTask1_S9(void* pvParameters);
 void vTaskDisplay_S9(void* pvParameters);
@@ -137,12 +134,19 @@ void vTaskDisplay_S9(void* pvParameters)
 	for (;;)
 	{
 		//printf_colored("\n Task DISPLAY executando\n\n", COLOR_YELLOW);
-		//xSemaphoreTake(xMutex, portMAX_DELAY);
 		if (endFileFlag) return;
 
+		//xSemaphoreTake(xMutex, portMAX_DELAY);
 		xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
 		//printf("\r\n\rTask DISPLAY: TAKE\n\r\n");
-		printf("\n> Amostras Coletadas:\n\r\t VA = %.3f <-.-> VA_rms = %.3f \n\r\t VB = %.3f <-.-> VB_rms = %.3f \n\r\t VC = %.3f <-.-> VC_rms = %.3f\n\n", vA, vA_RMS, vB, vB_RMS, vC, vC_RMS);
+		if ((vA_RMS != -999) && (vB_RMS != -999) || (vC_RMS != -999)) {
+			printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n\n", vA, vB, vC);
+			printf("\n========================================\n> Cálculo RMS das últimas %d amostras:\n\r\t VA_RMS = %.3f \n\r\t VB_RMS = %.3f \n\r\t VC_RMS = %.3f \n========================================\n", N, vA_RMS, vB_RMS, vC_RMS);
+		}
+		else {
+			printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n", vA, vB, vC);
+			//printf("\n> Amostras Coletadas:\n\r\t VA = %.3f <-.-> VA_rms = %.3f \n\r\t VB = %.3f <-.-> VB_rms = %.3f \n\r\t VC = %.3f <-.-> VC_rms = %.3f\n\n", vA, vA_RMS, vB, vB_RMS, vC, vC_RMS);
+		}
 	}
 }
 
@@ -216,10 +220,13 @@ void vTask1_S9(void* pvParameters)
 void vTaskCalcRMS_S9(void* pvParameters)
 {
 	float lReceivedValue;
+	float buffer_vA[16];
+	float buffer_vB[16];
+	float buffer_vC[16];
 	char rmsCalcFlag = 0;
+	char str[80];
 	portBASE_TYPE xStatus;
 	const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
-	char str[80];
 
 	for (int i = 0; i >= 0; i++)
 	{
@@ -291,9 +298,15 @@ void vTaskCalcRMS_S9(void* pvParameters)
 			i = 0;
 			rmsCalcFlag = 0;
 		}
+		else {
+			vA_RMS = -999;
+			vB_RMS = -999;
+			vC_RMS = -999;
+		}
 
 		//printf("\r\n\rTask RMS: GIVE \n\r\n");
 		xSemaphoreGive(xBinarySemaphore);
+		//xSemaphoreGive(xMutex);
 	}
 }
 
