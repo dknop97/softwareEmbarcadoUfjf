@@ -163,6 +163,9 @@
     <ClCompile Include="AV7.c">
       <Filter>Demo App Source</Filter>
     </ClCompile>
+    <ClCompile Include="ativS9.c">
+      <Filter>Demo App Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="FreeRTOSConfig.h">

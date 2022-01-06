@@ -33,7 +33,7 @@ void main_ex13(void)
 		printf("Task Printer 1 Criada!\r\n\n");
 
 		/*Cria a Task Printer 2 */
-		xTaskCreate(PrintTask_ex13, "Print2", 1000, "2", 1, NULL);
+		xTaskCreate(PrintTask_ex13, "Print2", 1000, "2", 2, NULL);
 		printf("Task Printer 2 Criada!\r\n\n");
 
 		/*Inicia o Escalonador*/

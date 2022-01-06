@@ -117,11 +117,12 @@ choice.  See http://www.freertos.org/a00111.html for an explanation. */
  * Exemplo 29 : QUESTÃO 01 DA ATIVIDADE AVALIATIVA DA SEMANA 5 SOBRE TASKS
  * Exemplo 30 : QUESTÃO 02 DA ATIVIDADE AVALIATIVA DA SEMANA 5 SOBRE TASKS
  * Exemplo 31 : ATIVIDADE AVALIATIVA DA SEMANA 7 SOBRE SEMÁFOROS
+ * Exemplo 32 : ATIVIDADE AVALIATIVA DA SEMANA 9
 */
 
 /* Escolha qual exemplo deseja executar: */
 
-#define example 31
+#define example 32
 
 #if (example == 1)
 extern void main_ex1(void);
@@ -216,6 +217,9 @@ extern void main_av5_q2(void);
 #endif
 #if (example == 31)
 extern void main_av7(void);
+#endif
+#if (example == 32)
+extern void main_S9(void);
 #endif
 
 /*
@@ -375,6 +379,9 @@ int main( void )
 	#endif
 	#if (example == 31)
 		main_av7();
+	#endif
+	#if (example == 32)
+		main_S9();
 	#endif
 	// Fim dos projetos das avaliações
 	#if (example == 99)

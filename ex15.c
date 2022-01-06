@@ -57,6 +57,7 @@ void vTask1_ex15(void* pvParameters)
 	portBASE_TYPE xStatus;
 
 	char str[80];
+	char str2[80];
 	
 	lValueToSend = (long)pvParameters; // Parametro a ser enviado
 
@@ -64,10 +65,10 @@ void vTask1_ex15(void* pvParameters)
 
 	for (;;)
 	{
-		
 		printf_colored(str, COLOR_GREEN);
 		xStatus = xQueueSendToBack(xQueue, &lValueToSend, portMAX_DELAY); // A opcao e por nao bloquear.
-		printf_colored("Valor Enviado!!\r\n", COLOR_GREEN);
+		sprintf(str2, "Valor %d Enviado!!\r\n", lValueToSend);
+		printf_colored(str2, COLOR_YELLOW);
 		if (xStatus != pdPASS)
 		{
 			printf_colored("Não foi possível enviar mensagem.\n", COLOR_RED);
