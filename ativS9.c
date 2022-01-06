@@ -27,16 +27,19 @@ FILE* fpVC;
 int N = 16; /*Para o cálculo do valor RMS*/
 char endFileFlag = 0;
 float vA, vB, vC, vA_RMS, vB_RMS, vC_RMS;
-//float buffer_vA[16];
+float buffer_vA[16];
+float buffer_vB[16];
+float buffer_vC[16];
 
 void vTask1_S9(void* pvParameters);
 void vTaskDisplay_S9(void* pvParameters);
 void vTaskCalcRMS_S9(void* pvParameters);
 
-float CalcRMS_S9(float valueToConvert);
+//float CalcRMS_S9(float valueToConvert);
+float CalcRMS_S9(float *pvParameters);
 
 /* Handle para o MUTEX */
-SemaphoreHandle_t xMutex;
+//SemaphoreHandle_t xMutex;
 
 /* Handle para o Semáforo Binário */
 xSemaphoreHandle xBinarySemaphore;
@@ -66,7 +69,7 @@ void main_S9(void)
 	printf_colored("---------------------------------------------------------------\r\n\n", COLOR_YELLOW);
 
 	/*Cria o MUTEX*/
-	xMutex = xSemaphoreCreateMutex();
+	//xMutex = xSemaphoreCreateMutex();
 
 	/*Cria o Semáforo Binário*/
 	vSemaphoreCreateBinary(xBinarySemaphore);
@@ -213,12 +216,12 @@ void vTask1_S9(void* pvParameters)
 void vTaskCalcRMS_S9(void* pvParameters)
 {
 	float lReceivedValue;
+	char rmsCalcFlag = 0;
 	portBASE_TYPE xStatus;
 	const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
-
 	char str[80];
 
-	for (;;)
+	for (int i = 0; i >= 0; i++)
 	{
 		//printf_colored("\n Task RMS executando\n\n", COLOR_YELLOW);
 		if (endFileFlag) {
@@ -235,7 +238,12 @@ void vTaskCalcRMS_S9(void* pvParameters)
 		{
 			//sprintf(str, "Valor %.3f recebido da fila xQueue_vA\r\n", lReceivedValue);
 			//printf_colored(str, COLOR_CYAN);
-			vA_RMS = CalcRMS_S9(lReceivedValue);
+			buffer_vA[i] = lReceivedValue;
+
+			if (i == (N - 1)) {
+				vA_RMS = CalcRMS_S9(&buffer_vA);
+				rmsCalcFlag = 1;
+			}
 		}
 		else
 		{
@@ -249,7 +257,12 @@ void vTaskCalcRMS_S9(void* pvParameters)
 		{
 			//sprintf(str, "Valor %.3f recebido da fila xQueue_vB\r\n", lReceivedValue);
 			//printf_colored(str, COLOR_GREEN);
-			vB_RMS = CalcRMS_S9(lReceivedValue);
+			buffer_vB[i] = lReceivedValue;
+
+			if (i == (N - 1)) {
+				vB_RMS = CalcRMS_S9(&buffer_vB);
+				rmsCalcFlag = 1;
+			}
 		}
 		else
 		{
@@ -263,11 +276,20 @@ void vTaskCalcRMS_S9(void* pvParameters)
 		{
 			//sprintf(str, "Valor %.3f recebido da fila xQueue_vC\r\n", lReceivedValue);
 			//printf_colored(str, COLOR_MAGENTA);
-			vC_RMS = CalcRMS_S9(lReceivedValue);
+			buffer_vC[i] = lReceivedValue;
+			if (i == (N - 1)) {
+				vC_RMS = CalcRMS_S9(&buffer_vC);
+				rmsCalcFlag = 1;
+			}
 		}
 		else
 		{
 			//printf_colored("Ocorreu algum erro na recepção da fila xQueue_vC!\r\n", COLOR_RED);
+		}
+
+		if (rmsCalcFlag) {
+			i = 0;
+			rmsCalcFlag = 0;
 		}
 
 		//printf("\r\n\rTask RMS: GIVE \n\r\n");
@@ -276,15 +298,14 @@ void vTaskCalcRMS_S9(void* pvParameters)
 }
 
 // Função para realizar o cálculo RMS do valor informado
-float CalcRMS_S9(float valueToConvert) {
-	//unsigned int ui;
-	//float average = 0.0;
+float CalcRMS_S9(float* pvParameters) {
+	unsigned int ui;
+	float average = 0.0;
 
-	//for (ui = 0; ui < N; ui++)
-	//{
-	//	average += pow(buffer_vA[ui], 2);
-	//}
+	for (ui = 0; ui < N; ui++)
+	{
+		average += pow(pvParameters[ui], 2);
+	}
 	// fazer a média dos quadrados dos N itens lidos e Tirar a raiz
-	//return sqrt(average/N);
-	return valueToConvert/sqrt(2);
+	return sqrt(average/N);
 }
