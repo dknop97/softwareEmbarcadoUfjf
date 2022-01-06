@@ -8,6 +8,7 @@
 
 /* Includes Padrão C */
 #include <stdio.h>
+#include <math.h>
 #include <locale.h>
 
 /* Include para prints*/
@@ -24,12 +25,15 @@ FILE* fpVB;
 FILE* fpVC;
 
 int N = 16; /*Para o cálculo do valor RMS*/
-float vA, vB, vC, vA_RMS, vB_RMS, vC_RMS;
 char endFileFlag = 0;
+float vA, vB, vC, vA_RMS, vB_RMS, vC_RMS;
+//float buffer_vA[16];
 
 void vTask1_S9(void* pvParameters);
 void vTaskDisplay_S9(void* pvParameters);
 void vTaskCalcRMS_S9(void* pvParameters);
+
+float CalcRMS_S9(float valueToConvert);
 
 /* Handle para o MUTEX */
 SemaphoreHandle_t xMutex;
@@ -274,13 +278,13 @@ void vTaskCalcRMS_S9(void* pvParameters)
 // Função para realizar o cálculo RMS do valor informado
 float CalcRMS_S9(float valueToConvert) {
 	//unsigned int ui;
+	//float average = 0.0;
 
 	//for (ui = 0; ui < N; ui++)
 	//{
-	//	// fazer a média dos quadrados dos N-1 itens lidos
-	//	// dividir por N essa média
-	//	// Tirar a raiz
+	//	average += pow(buffer_vA[ui], 2);
 	//}
-
-	return valueToConvert;
+	// fazer a média dos quadrados dos N itens lidos e Tirar a raiz
+	//return sqrt(average/N);
+	return valueToConvert/sqrt(2);
 }
