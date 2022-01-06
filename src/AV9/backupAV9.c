@@ -1,4 +1,5 @@
-﻿// TASK DISPLAY ATUA (MAIOR PRIORIDADE) E SE BLOQUEIA TENTANDO OBTER MUTEX
+
+// TASK DISPLAY ATUA (MAIOR PRIORIDADE) E SE BLOQUEIA TENTANDO OBTER MUTEX
 		// TASK DE LEITURA ATUA (PRIORIDADE INTERMEDIÁRIA), OBTEM VA, VB e VC; ADICIONA ELAS NAS FILAS; LANÇA UM YELD
 		// ENTRA A TASK RMS (MENOR PRIORIDADE)
 		//		- LÊ DAS FILAS E CALCULA O RMS ATÉ LER A, B e C
@@ -26,14 +27,11 @@ FILE* fpVC;
 
 int N = 16; /*Para o cálculo do valor RMS*/
 char endFileFlag = 0;
-float vA, vB, vC;
-float vA_RMS = -999, vB_RMS = -999, vC_RMS = -999;
+float vA, vB, vC, vA_RMS, vB_RMS, vC_RMS;
 
 void vTask1_S9(void* pvParameters);
 void vTaskDisplay_S9(void* pvParameters);
-void vTaskCalcRMS_vA_S9(void* pvParameters);
-void vTaskCalcRMS_vB_S9(void* pvParameters);
-void vTaskCalcRMS_vC_S9(void* pvParameters);
+void vTaskCalcRMS_S9(void* pvParameters);
 
 //float CalcRMS_S9(float valueToConvert);
 float CalcRMS_S9(float *pvParameters);
@@ -114,21 +112,9 @@ void main_S9(void)
 	printf_colored("---------------------------------------------------------------\r\n\n", COLOR_CYAN);
 
 	/*Cria a Task calcRMS*/
-	xTaskCreate(vTaskCalcRMS_vA_S9, "TaskCalcRMS_vA", 1000, NULL, 1, NULL);
+	xTaskCreate(vTaskCalcRMS_S9, "TaskCalcRMS", 1000, NULL, 1, NULL);
 	printf_colored("---------------------------------------------------------------\r\n", COLOR_YELLOW);
-	printf_colored(">> Task \"Calcula RMS de vA\" Criada!\r\n", COLOR_YELLOW);
-	printf_colored("---------------------------------------------------------------\r\n\n", COLOR_YELLOW);
-
-	/*Cria a Task calcRMS*/
-	xTaskCreate(vTaskCalcRMS_vB_S9, "TaskCalcRMS_vB", 1000, NULL, 1, NULL);
-	printf_colored("---------------------------------------------------------------\r\n", COLOR_YELLOW);
-	printf_colored(">> Task \"Calcula RMS de vB\" Criada!\r\n", COLOR_YELLOW);
-	printf_colored("---------------------------------------------------------------\r\n\n", COLOR_YELLOW);
-
-	/*Cria a Task calcRMS*/
-	xTaskCreate(vTaskCalcRMS_vC_S9, "TaskCalcRMS_vC", 1000, NULL, 1, NULL);
-	printf_colored("---------------------------------------------------------------\r\n", COLOR_YELLOW);
-	printf_colored(">> Task \"Calcula RMS de vC\" Criada!\r\n", COLOR_YELLOW);
+	printf_colored(">> Task \"Calcula RMS\" Criada!\r\n", COLOR_YELLOW);
 	printf_colored("---------------------------------------------------------------\r\n\n", COLOR_YELLOW);
 
 	/*Inicia o Escalonador*/
@@ -149,30 +135,18 @@ void vTaskDisplay_S9(void* pvParameters)
 	for (;;)
 	{
 		//printf_colored("\n Task DISPLAY executando\n\n", COLOR_YELLOW);
+		if (endFileFlag) return;
 
 		//xSemaphoreTake(xMutex, portMAX_DELAY);
 		xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
-		if (endFileFlag) return;
 		//printf("\r\n\rTask DISPLAY: TAKE\n\r\n");
-		printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n\n", vA, vB, vC);
-		
-		if (vA_RMS != -999) {
-			printf("\n=============================================\n");
-			printf("> Cálculo RMS das últimas % d amostras de vA: ", N);
-			printf("\n\r\t VA_RMS = % .3f", vA_RMS);
-			printf("\n=============================================\n");
+		if ((vA_RMS != -999) && (vB_RMS != -999) || (vC_RMS != -999)) {
+			printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n\n", vA, vB, vC);
+			printf("\n========================================\n> Cálculo RMS das últimas %d amostras:\n\r\t VA_RMS = %.3f \n\r\t VB_RMS = %.3f \n\r\t VC_RMS = %.3f \n========================================\n", N, vA_RMS, vB_RMS, vC_RMS);
 		}
-		if (vB_RMS != -999) {
-			printf("\n=============================================\n");
-			printf("> Cálculo RMS das últimas % d amostras de vB: ", N);
-			printf("\n\r\t VB_RMS = % .3f", vB_RMS);
-			printf("\n=============================================\n");
-		}
-		if (vC_RMS != -999) {
-			printf("\n=============================================\n");
-			printf("> Cálculo RMS das últimas % d amostras de vC: ", N);
-			printf("\n\r\t VC_RMS = % .3f", vC_RMS);
-			printf("\n=============================================\n");
+		else {
+			printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n", vA, vB, vC);
+			//printf("\n> Amostras Coletadas:\n\r\t VA = %.3f <-.-> VA_rms = %.3f \n\r\t VB = %.3f <-.-> VB_rms = %.3f \n\r\t VC = %.3f <-.-> VC_rms = %.3f\n\n", vA, vA_RMS, vB, vB_RMS, vC, vC_RMS);
 		}
 	}
 }
@@ -244,10 +218,12 @@ void vTask1_S9(void* pvParameters)
 }
 
 // Task para calcular o valor RMS da amostra de tensão informada
-void vTaskCalcRMS_vA_S9(void* pvParameters)
+void vTaskCalcRMS_S9(void* pvParameters)
 {
 	float lReceivedValue;
 	float buffer_vA[16];
+	float buffer_vB[16];
+	float buffer_vC[16];
 	char rmsCalcFlag = 0;
 	char str[80];
 	portBASE_TYPE xStatus;
@@ -281,40 +257,6 @@ void vTaskCalcRMS_vA_S9(void* pvParameters)
 		{
 			//printf_colored("Ocorreu algum erro na recepção da fila xQueue_vA!\r\n", COLOR_RED);
 		}
-		
-		if (rmsCalcFlag) {
-			i = 0;
-			rmsCalcFlag = 0;
-		}
-		else {
-			vA_RMS = -999;
-		}
-
-		//printf("\r\n\rTask RMS: GIVE \n\r\n");
-		xSemaphoreGive(xBinarySemaphore);
-		//xSemaphoreGive(xMutex);
-	}
-}
-
-// Task para calcular o valor RMS da amostra de tensão informada
-void vTaskCalcRMS_vB_S9(void* pvParameters)
-{
-	float lReceivedValue;
-	float buffer_vB[16];
-	char rmsCalcFlag = 0;
-	char str[80];
-	portBASE_TYPE xStatus;
-	const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
-
-	for (int i = 0; i >= 0; i++)
-	{
-		//printf_colored("\n Task RMS executando\n\n", COLOR_YELLOW);
-		if (endFileFlag) {
-			//printf("\r\n\rTask RMS: FINAL GIVE \n\r\n");
-			xSemaphoreGive(xBinarySemaphore);
-			//xSemaphoreGive(xMutex);
-			//return;
-		}
 		// -------------------------
 		//printf_colored("Destinatário tenta ler mensagem na fila xQueue_vB.\n", COLOR_GREEN);
 		xStatus = xQueueReceive(xQueue_vB, &lReceivedValue, xTicksToWait);
@@ -334,39 +276,7 @@ void vTaskCalcRMS_vB_S9(void* pvParameters)
 		{
 			//printf_colored("Ocorreu algum erro na recepção da fila xQueue_vB!\r\n", COLOR_RED);
 		}
-		if (rmsCalcFlag) {
-			i = 0;
-			rmsCalcFlag = 0;
-		}
-		else {
-			vB_RMS = -999;
-		}
-
-		//printf("\r\n\rTask RMS: GIVE \n\r\n");
-		xSemaphoreGive(xBinarySemaphore);
-		//xSemaphoreGive(xMutex);
-	}
-}
-
-void vTaskCalcRMS_vC_S9(void* pvParameters)
-{
-	float lReceivedValue;
-	float buffer_vC[16];
-	char rmsCalcFlag = 0;
-	char str[80];
-	portBASE_TYPE xStatus;
-	const portTickType xTicksToWait = 100 / portTICK_RATE_MS;
-
-	for (int i = 0; i >= 0; i++)
-	{
-		//printf_colored("\n Task RMS executando\n\n", COLOR_YELLOW);
-		if (endFileFlag) {
-			//printf("\r\n\rTask RMS: FINAL GIVE \n\r\n");
-			xSemaphoreGive(xBinarySemaphore);
-			//xSemaphoreGive(xMutex);
-			//return;
-		}
-
+		// -------------------------
 		//printf_colored("Destinatário tenta ler mensagem na fila xQueue_vC.\n", COLOR_MAGENTA);
 		xStatus = xQueueReceive(xQueue_vC, &lReceivedValue, xTicksToWait);
 
@@ -390,6 +300,8 @@ void vTaskCalcRMS_vC_S9(void* pvParameters)
 			rmsCalcFlag = 0;
 		}
 		else {
+			vA_RMS = -999;
+			vB_RMS = -999;
 			vC_RMS = -999;
 		}
 
