@@ -1,5 +1,13 @@
-﻿// TASK DISPLAY ATUA (MAIOR PRIORIDADE) E SE BLOQUEIA TENTANDO OBTER SEMÁFORO
-// - TASK DE LEITURA ATUA (PRIORIDADE INTERMEDIÁRIA), OBTEM VA, VB e VC; ADICIONA ELAS NAS FILAS CORRESPONDENTES; SE BLOQUEIA
+﻿/*
+* Atividade: Avaliação Semana 9 - CEL080 - 2021.3 - TURMA A
+* Autor: David Nery Henriques Knop
+* Matrícula: 201669038A
+* Data: 06/01/2022
+*/
+
+// TASK DISPLAY ATUA (MAIOR PRIORIDADE) E SE BLOQUEIA TENTANDO OBTER SEMÁFORO
+// - TASK DE LEITURA ATUA (PRIORIDADE INTERMEDIÁRIA), OBTEM VA, VB e VC; ADICIONA ELAS NAS FILAS CORRESPONDENTES; 
+//		SE BLOQUEIA
 // - ATUAM AS TASKS DE CÁLCULO DO RMS (MENOR PRIORIDADE)
 //		- SÃO 3, UMA PARA CADA CANAL DE LEITURA. TODAS FAZEM O MESMO PROCEDIMENTO:
 //			- LÊ  A AMOSTRA DA FILA CORRESPONDENTE
@@ -10,8 +18,8 @@
 
 /* Includes Padrão C */
 #include <stdio.h>
-#include <math.h>
 #include <locale.h>
+#include <math.h>
 
 /* Include para prints*/
 #include "defines.h"
@@ -22,7 +30,7 @@
 #include "semphr.h"
 #include "queue.h"
 
-FILE* fpVA;
+FILE * fpVA;
 FILE* fpVB;
 FILE* fpVC;
 
@@ -38,7 +46,7 @@ void vTaskCalcRMS_vB_S9(void* pvParameters);
 void vTaskCalcRMS_vC_S9(void* pvParameters);
 
 //float CalcRMS_S9(float valueToConvert);
-float CalcRMS_S9(float *sampleArray);
+float CalcRMS_S9(float* sampleArray);
 
 /* Handle para o MUTEX */
 //SemaphoreHandle_t xMutex;
@@ -62,7 +70,7 @@ void main_S9(void)
 		printf_colored("---------------------------------------------------------------\r\n", COLOR_RED);
 		printf_colored("> Os arquivos de amostras não foram encontrados!\r\n", COLOR_RED);
 		printf_colored("---------------------------------------------------------------\r\n\n", COLOR_RED);
-		
+
 		return 1;
 	}
 
@@ -90,9 +98,9 @@ void main_S9(void)
 	xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
 
 	/* Cria as filas com tamanho N e com capacidade para variaveis do tipo double */
-	xQueue_vA = xQueueCreate(2, sizeof(float));
-	xQueue_vB = xQueueCreate(2, sizeof(float));
-	xQueue_vC = xQueueCreate(2, sizeof(float));
+	xQueue_vA = xQueueCreate(1, sizeof(float));
+	xQueue_vB = xQueueCreate(1, sizeof(float));
+	xQueue_vC = xQueueCreate(1, sizeof(float));
 
 	if ((xQueue_vA == NULL) || (xQueue_vB == NULL) || (xQueue_vC == NULL))
 	{
@@ -108,7 +116,7 @@ void main_S9(void)
 	printf_colored("---------------------------------------------------------------\r\n", COLOR_GREEN);
 	printf_colored(">> Task \"Display\" Criada!\r\n", COLOR_GREEN);
 	printf_colored("---------------------------------------------------------------\r\n\n", COLOR_GREEN);
-	
+
 	/*Cria a Task Amostragem*/
 	xTaskCreate(vTask1_S9, "TaskAmostragem", 1000, NULL, 2, NULL);
 	printf_colored("---------------------------------------------------------------\r\n", COLOR_CYAN);
@@ -140,12 +148,10 @@ void main_S9(void)
 	printf_colored("===============================================================\r\n", COLOR_RED);
 	vTaskStartScheduler();
 
-	while (1 && !endFileFlag);
-
-	return;
+	while (1);
 }
 
-// Task para exibição das amostras das tensões lidas e convertidas para RMS
+// Task para exibição das amostras das tensões convertidas para RMS
 void vTaskDisplay_S9(void* pvParameters)
 {
 	for (;;)
@@ -153,32 +159,36 @@ void vTaskDisplay_S9(void* pvParameters)
 		//printf_colored("\n Task DISPLAY executando\n\n", COLOR_YELLOW);
 
 		//xSemaphoreTake(xMutex, portMAX_DELAY);
+		if (endFileFlag) vTaskDelete(NULL);
 		xSemaphoreTake(xBinarySemaphore, portMAX_DELAY);
-		if (endFileFlag) return;
 		//printf("\r\n\rTask DISPLAY: TAKE\n\r\n");
-		printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n\n", vA, vB, vC);
-		
+		//printf("\n> Amostras Coletadas:\n\r\t VA = %.3f \n\r\t VB = %.3f \n\r\t VC = %.3f \n\n", vA, vB, vC);
+
 		if (vA_RMS != -999) {
 			printf("\n=============================================\n");
 			printf("> Cálculo RMS das últimas % d amostras de vA: ", N);
 			printf("\n\r\t VA_RMS = % .3f", vA_RMS);
 			printf("\n=============================================\n");
+			vA_RMS = -999;
 		}
 		if (vB_RMS != -999) {
 			printf("\n=============================================\n");
 			printf("> Cálculo RMS das últimas % d amostras de vB: ", N);
 			printf("\n\r\t VB_RMS = % .3f", vB_RMS);
 			printf("\n=============================================\n");
+			vB_RMS = -999;
 		}
 		if (vC_RMS != -999) {
 			printf("\n=============================================\n");
 			printf("> Cálculo RMS das últimas % d amostras de vC: ", N);
 			printf("\n\r\t VC_RMS = % .3f", vC_RMS);
 			printf("\n=============================================\n");
+			vC_RMS = -999;
 		}
 	}
 }
 
+// Task de obtenção das amostras
 void vTask1_S9(void* pvParameters)
 {
 	char str[16];
@@ -214,6 +224,8 @@ void vTask1_S9(void* pvParameters)
 			vTaskDelete(NULL);
 		}
 		vC = atof(str);
+
+		printf("Amostras Coletadas: VA = %.3f | VB = %.3f | VC = %.3f\n", vA, vB, vC);
 
 		xStatus = xQueueSendToBack(xQueue_vA, &vA, portMAX_DELAY); // A opcao e por nao bloquear.
 		//sprintf(str2, "Valor %f Enviado para a fila xQueue_vA!!\r\n", vA);
@@ -258,12 +270,7 @@ void vTaskCalcRMS_vA_S9(void* pvParameters)
 	for (int i = 0; i >= 0; i++)
 	{
 		//printf_colored("\n Task RMS executando\n\n", COLOR_YELLOW);
-		if (endFileFlag) {
-			//printf("\r\n\rTask RMS: FINAL GIVE \n\r\n");
-			xSemaphoreGive(xBinarySemaphore);
-			//xSemaphoreGive(xMutex);
-			//return;
-		}
+		if (endFileFlag) vTaskDelete(NULL);
 
 		//printf_colored("Destinatário tenta ler mensagem na fila xQueue_vA.\n", COLOR_CYAN);
 		xStatus = xQueueReceive(xQueue_vA, &lReceivedValue, xTicksToWait);
@@ -274,7 +281,7 @@ void vTaskCalcRMS_vA_S9(void* pvParameters)
 			//printf_colored(str, COLOR_CYAN);
 			buffer_vA[i] = lReceivedValue;
 
-			if (i == (N - 1)) {
+			if (i == N) {
 				vA_RMS = CalcRMS_S9(&buffer_vA);
 				rmsCalcFlag = 1;
 			}
@@ -283,7 +290,7 @@ void vTaskCalcRMS_vA_S9(void* pvParameters)
 		{
 			//printf_colored("Ocorreu algum erro na recepção da fila xQueue_vA!\r\n", COLOR_RED);
 		}
-		
+
 		if (rmsCalcFlag) {
 			i = 0;
 			rmsCalcFlag = 0;
@@ -311,12 +318,7 @@ void vTaskCalcRMS_vB_S9(void* pvParameters)
 	for (int i = 0; i >= 0; i++)
 	{
 		//printf_colored("\n Task RMS executando\n\n", COLOR_YELLOW);
-		if (endFileFlag) {
-			//printf("\r\n\rTask RMS: FINAL GIVE \n\r\n");
-			xSemaphoreGive(xBinarySemaphore);
-			//xSemaphoreGive(xMutex);
-			//return;
-		}
+		if (endFileFlag) vTaskDelete(NULL);
 		// -------------------------
 		//printf_colored("Destinatário tenta ler mensagem na fila xQueue_vB.\n", COLOR_GREEN);
 		xStatus = xQueueReceive(xQueue_vB, &lReceivedValue, xTicksToWait);
@@ -327,7 +329,7 @@ void vTaskCalcRMS_vB_S9(void* pvParameters)
 			//printf_colored(str, COLOR_GREEN);
 			buffer_vB[i] = lReceivedValue;
 
-			if (i == (N - 1)) {
+			if (i == N) {
 				vB_RMS = CalcRMS_S9(&buffer_vB);
 				rmsCalcFlag = 1;
 			}
@@ -363,12 +365,7 @@ void vTaskCalcRMS_vC_S9(void* pvParameters)
 	for (int i = 0; i >= 0; i++)
 	{
 		//printf_colored("\n Task RMS executando\n\n", COLOR_YELLOW);
-		if (endFileFlag) {
-			//printf("\r\n\rTask RMS: FINAL GIVE \n\r\n");
-			xSemaphoreGive(xBinarySemaphore);
-			//xSemaphoreGive(xMutex);
-			//return;
-		}
+		if (endFileFlag) vTaskDelete(NULL);
 
 		//printf_colored("Destinatário tenta ler mensagem na fila xQueue_vC.\n", COLOR_MAGENTA);
 		xStatus = xQueueReceive(xQueue_vC, &lReceivedValue, xTicksToWait);
@@ -378,7 +375,7 @@ void vTaskCalcRMS_vC_S9(void* pvParameters)
 			//sprintf(str, "Valor %.3f recebido da fila xQueue_vC\r\n", lReceivedValue);
 			//printf_colored(str, COLOR_MAGENTA);
 			buffer_vC[i] = lReceivedValue;
-			if (i == (N - 1)) {
+			if (i == N) {
 				vC_RMS = CalcRMS_S9(&buffer_vC);
 				rmsCalcFlag = 1;
 			}
@@ -412,5 +409,5 @@ float CalcRMS_S9(float* sampleArray) {
 		sumOfSquares += pow(sampleArray[ui], 2);
 	}
 	// fazer a média dos quadrados dos N itens lidos e tirar a raiz
-	return sqrt(sumOfSquares/N);
+	return sqrt(sumOfSquares / N);
 }
